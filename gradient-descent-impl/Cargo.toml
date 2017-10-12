@@ -3,6 +3,7 @@ name = "multivariate-gradient-descent"
 version = "0.1.0"
 authors = ["brian@sweetapp.com"]
 description = "Implements multivariate gradient descent to fit a simple test function."
+repository = "https://github.com/brianquinlan/learn-machine-learning/tree/master/gradient-descent-impl"
 
 [dependencies]
 rand = "0.3"
