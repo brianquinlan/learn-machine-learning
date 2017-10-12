@@ -1,0 +1,8 @@
+[package]
+name = "multivariate-gradient-descent"
+version = "0.1.0"
+authors = ["brian@sweetapp.com"]
+description = "Implements multivariate gradient descent to fit a simple test function."
+
+[dependencies]
+rand = "0.3"
