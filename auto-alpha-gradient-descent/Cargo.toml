@@ -1,0 +1,9 @@
+[package]
+name = "multivariate-gradient-descent"
+version = "0.1.0"
+authors = ["brian@sweetapp.com"]
+description = "Dynamically adjust alpha if the gradient descent diverges."
+repository = "https://github.com/brianquinlan/learn-machine-learning/tree/master/auto-alpha-gradient-descent"
+
+[dependencies]
+rand = "0.3"
