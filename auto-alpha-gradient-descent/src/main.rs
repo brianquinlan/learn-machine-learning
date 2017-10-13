@@ -59,7 +59,8 @@ fn main() {
         let new_error = J(&update, &x, &y);
         if new_error > error {
             alpha /= 3.0;
-            println!("Reducing alpha to: {:?} at iteration {:?}", alpha, count);
+            println!("Reducing alpha to: {:?} at iteration {:?} [theta: {:?}]",
+                alpha, count, theta);
         } else {
             theta = update;
             error = new_error;
