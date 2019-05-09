@@ -1,0 +1,6 @@
+numpy>=1.16.3
+Pillow>=6.0.0
+pygame>=1.9.6
+scikit-learn>=0.20.3
+tqdm>=4.31.1
+yapf>=0.27.0
