@@ -45,7 +45,7 @@ class AgentMoveMaker(well_bouncer_game.MoveMaker):
             try:
                 self._agent = pickle.load(open(self._model_path, 'rb'))
             except EOFError:
-                print('write being written to (will retry)')
+                print('file is being written to (will retry)')
             else:
                 print('success')
                 self._last_time = current_time
