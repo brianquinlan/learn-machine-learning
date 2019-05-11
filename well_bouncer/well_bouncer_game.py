@@ -53,7 +53,11 @@ class Game:
     NUM_STATES = 6
     NUM_ACTIONS = 3
 
-    def __init__(self):
+    def __init__(self,
+                 reward_time_multiplier=1.0,
+                 reward_bounces_multiplier=0.0,
+                 reward_height_multiplier=0.0,
+                 punish_moves_multiplier=1.0):
         self._actions = []
         self._ball_pos = np.array([3 + random.random() * 19, 100.0])
         self._ball_v = np.array([-0.3 + random.random() * 0.6, 0.0])
@@ -63,6 +67,10 @@ class Game:
         self.paddle_radius = 10
         self._done = False
         self._score = 0
+        self._reward_time_multiplier = reward_time_multiplier
+        self._reward_bounces_multiplier = reward_bounces_multiplier
+        self._reward_height_multiplier = reward_height_multiplier
+        self._punish_moves_multiplier = punish_moves_multiplier
 
     @property
     def done(self):
@@ -102,12 +110,16 @@ class Game:
     def _update(self):
         assert not self._done
 
+        self._score += self._reward_time_multiplier
+
+        old_y = self.ball_y
         self._ball_v += self._g
         self._ball_pos += self._ball_v
 
         distance = np.linalg.norm(
             [self.paddle_x - self.ball_x, self.paddle_y - self.ball_y])
         if distance < (self.paddle_radius + self.ball_radius):
+            self._score += self._reward_bounces_multiplier
             n = _normalize(
                 [self.paddle_x - self.ball_x, self.paddle_y - self.ball_y])
             self._ball_v = self._ball_v - 2 * (np.dot(self._ball_v, n)) * n
@@ -116,27 +128,35 @@ class Game:
         if self.ball_y < self.ball_radius:
             self._done = True
         elif self.ball_x < self.ball_radius:
+            self._score += self._reward_bounces_multiplier
             self._ball_v *= [-1, 1]
             self._ball_pos += [self._ball_v[0], 0]
         elif self.ball_x > (25 - self.ball_radius):
+            self._score += self._reward_bounces_multiplier
             self._ball_v *= [-1, 1]
             self._ball_pos += [self._ball_v[0], 0]
+
+        if self.ball_y > old_y:
+            self._score += (self.ball_y -
+                            old_y) * self._reward_height_multiplier
+
         return self.state
 
     def move_left(self):
+        self._score -= self._punish_moves_multiplier
         self._paddle_pos += [-2, 0]
         if self._paddle_pos[0] < 0:
             self._paddle_pos[0] = 0
         return self._update()
 
     def move_right(self):
+        self._score -= self._punish_moves_multiplier
         self._paddle_pos += [2, 0]
         if self._paddle_pos[0] > 25:
             self._paddle_pos[0] = 25
         return self._update()
 
     def stay(self):
-        self._score += 1
         return self._update()
 
     def move(self, direction: Direction):

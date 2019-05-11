@@ -25,6 +25,8 @@ from sklearn.linear_model import LogisticRegression, SGDClassifier
 import sklearn.exceptions
 import tqdm
 
+import game_factory
+import model
 import well_bouncer_game
 
 
@@ -35,9 +37,9 @@ def _make_move(agent, g):
     return a
 
 
-def _generate_session(agent, t_max=10000):
+def _generate_session(agent, game_factory, t_max=10000):
     states, actions = [], []
-    g = well_bouncer_game.Game()
+    g = game_factory.new_game()
 
     for t in range(t_max):
         states.append(g.state)
@@ -86,7 +88,8 @@ def _simple_train_once(agent, num_games):
         agent.fit(states, actions)
 
 
-def _self_train_once(agent, num_games, elite_percentile, stop_checker):
+def _self_train_once(agent, game_factory, num_games, elite_percentile,
+                     stop_checker):
     states = []
     actions = []
     scores = []
@@ -94,7 +97,7 @@ def _self_train_once(agent, num_games, elite_percentile, stop_checker):
                        leave=False,
                        ncols=31,
                        bar_format="{bar}"):
-        state, a, score = _generate_session(agent)
+        state, a, score = _generate_session(agent, game_factory)
         if stop_checker():
             return
         states.append(state)
@@ -155,10 +158,40 @@ def main():
         help=("The quality that a game must have (in terms of score) to be "
               "selected for training."),
     )
+    parser.add_argument(
+        "--reward-time-multiplier",
+        type=float,
+        default=1.0,
+        help=("The quality that a game must have (in terms of score) to be "
+              "selected for training."),
+    )
+    parser.add_argument(
+        "--reward-bounces-multiplier",
+        type=float,
+        default=0.0,
+        help=("The quality that a game must have (in terms of score) to be "
+              "selected for training."),
+    )
+    parser.add_argument(
+        "--reward-height-multiplier",
+        type=float,
+        default=0.0,
+        help=("The quality that a game must have (in terms of score) to be "
+              "selected for training."),
+    )
+    parser.add_argument(
+        "--punish-moves-multiplier",
+        type=float,
+        default=1.0,
+        help=("The quality that a game must have (in terms of score) to be "
+              "selected for training."),
+    )
     args = parser.parse_args()
 
     if args.model_file and os.path.exists(args.model_file):
-        agent = pickle.load(open(args.model_file, "rb"))
+        m = pickle.load(open(args.model_file, "rb"))
+        if not isinstance(m, model.Model):
+            m = model.Model(m, game_factory.GameFactory())
     else:
         if args.agent_type == "logistic-regression":
             agent = LogisticRegression(solver="lbfgs", multi_class="auto")
@@ -176,13 +209,20 @@ def main():
             list(range(well_bouncer_game.Game.NUM_ACTIONS)),
         )
 
+        gf = game_factory.GameFactory(
+            reward_time_multiplier=args.reward_time_multiplier,
+            reward_bounces_multiplier=args.reward_bounces_multiplier,
+            reward_height_multiplier=args.reward_height_multiplier,
+            punish_moves_multiplier=args.punish_moves_multiplier)
+
+        m = model.Model(agent, gf)
     print("{:>10} {:>9.0f}% {:>10}".format("MEAN", args.elite_percentile,
                                            "KEPT"))
     print("{:>10} {:>10} {:>10}".format("====", "===", "===="))
     while not stop:
-        _self_train_once(agent, args.num_games,
+        _self_train_once(m.agent, m.game_factory, args.num_games,
                          args.elite_percentile, lambda: stop)
-        pickle.dump(agent, open(args.model_file, "wb"))
+        pickle.dump(m, open(args.model_file, "wb"))
 
 
 if __name__ == "__main__":

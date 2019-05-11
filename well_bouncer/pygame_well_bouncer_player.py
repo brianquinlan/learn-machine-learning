@@ -83,7 +83,7 @@ def play_game(title, game, move_maker: well_bouncer_game.MoveMaker):
                 pygame.draw.rect(_screen, c,
                                  pygame.Rect(66 * i, 0, 66 * i + 66, 8))
 
-        score_surface = score_font.render(str(game.score), False,
+        score_surface = score_font.render(str(int(game.score)), False,
                                           (255, 255, 0))
         score_surface.set_alpha(64)
 

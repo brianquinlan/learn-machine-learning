@@ -21,38 +21,45 @@ from typing import Mapping, Optional
 
 import numpy as np
 
+#import game_factory
+#import model
 import pygame_well_bouncer_player
 import well_bouncer_game
 
 
-class AgentMoveMaker(well_bouncer_game.MoveMaker):
+class ModelLoader:
     def __init__(self, model_path):
         self._model_path = model_path
-        self._agent = None
+        self._model = None
         self._last_time = None
         self._last_mtime = None
 
-    def _load_agent(self):
+    def load(self):
         current_time = time.time()
-        if self._agent is None or current_time > self._last_time + 2:
+        if self._model is None or current_time > self._last_time + 2:
             current_mtime = os.path.getmtime(self._model_path)
             if current_mtime == self._last_mtime:
-                return
+                return self._model
             print('{} {} ... '.format(
-                "Reloading" if self._agent else "Loading",
+                "Reloading" if self._model else "Loading",
                 os.path.basename(self._model_path)),
                   end='')
             try:
-                self._agent = pickle.load(open(self._model_path, 'rb'))
+                self._model = pickle.load(open(self._model_path, 'rb'))
             except EOFError:
                 print('file is being written to (will retry)')
             else:
                 print('success')
                 self._last_time = current_time
                 self._last_mtime = current_mtime
+        return self._model
+
+
+class AgentMoveMaker(well_bouncer_game.MoveMaker):
+    def __init__(self, agent):
+        self._agent = agent
 
     def make_move(self, state) -> well_bouncer_game.Direction:
-        self._load_agent()
         probs = self._agent.predict_proba([state])[0]
         action = np.random.choice(self._agent.classes_, p=probs)
         return action
@@ -60,7 +67,6 @@ class AgentMoveMaker(well_bouncer_game.MoveMaker):
     def move_probabilities(
             self,
             state) -> Optional[Mapping[well_bouncer_game.Direction, float]]:
-        self._load_agent()
         return {
             move: prob
             for (move, prob) in zip(self._agent.classes_,
@@ -79,14 +85,21 @@ def main():
     args = parser.parse_args()
 
     if args.model_file:
-        move_maker = AgentMoveMaker(args.model_file)
+        model_loader = ModelLoader(args.model_file)
         title = os.path.basename(args.model_file)
     else:
+        model_loader = None
         move_maker = pygame_well_bouncer_player.InteractiveMoveMaker()
         title = 'You'
 
     while True:
-        game = well_bouncer_game.Game()
+        if model_loader is None:
+            game = well_bouncer_game.Game(reward_height_multiplier=1)
+        else:
+            m = model_loader.load()
+            move_maker = AgentMoveMaker(m.agent)
+            game = m.game_factory.new_game()
+
         pygame_well_bouncer_player.play_game(title, game, move_maker)
 
 
