@@ -37,7 +37,7 @@ def _make_move(agent, g):
     return a
 
 
-def _generate_session(agent, game_factory, t_max=10000):
+def _generate_session(agent, game_factory, t_max=100000):
     states, actions = [], []
     g = game_factory.new_game()
 
