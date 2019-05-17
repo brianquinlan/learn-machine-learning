@@ -58,7 +58,6 @@ class Game:
                  reward_bounces_multiplier=0.0,
                  reward_height_multiplier=0.0,
                  punish_moves_multiplier=1.0):
-        self._actions = []
         self._ball_pos = np.array([3 + random.random() * 19, 100.0])
         self._ball_v = np.array([-0.3 + random.random() * 0.6, 0.0])
         self.ball_radius = 1
