@@ -1,0 +1,8 @@
+gym[box2d]
+numpy
+pyglet
+scikit-learn
+scipy
+six
+sklearn
+tqdm
